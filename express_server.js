@@ -60,11 +60,20 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.redirect(`/urls/ ${generateRandomString()}`);         // Respond with 'Ok' (we will replace this)
+  let shortUrl = generateRandomString();
+  //console.log(req.body);  // Log the POST request body to the console
+  urlDatabase[shortUrl] = req.body.longURL;
+  res.redirect(`/urls/${shortUrl}`);         // Respond with 'Ok' (we will replace this)
 });
 
-// eslint-disable-next-line no-unused-vars
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase.shortURL;
+  const url = req.params.shortURL;
+  delete urlDatabase[url];
+  res.redirect("/urls");
+});
+
+app.post("/urls/:shortURL/", (req, res) => {
+  const url = req.params.shortURL;
+  urlDatabase[url] = req.body.longURL;
+  res.redirect("/urls");
 });
