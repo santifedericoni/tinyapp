@@ -62,7 +62,7 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL,
-    longURL: 'b2xVn2',
+    longURL: req.params["longURL"],
     userName: req.cookies['username']};
   res.render("urls_show", templateVars);
 });
