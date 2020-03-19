@@ -13,10 +13,48 @@ const generateRandomString = function()  {
   }
   return result;
 };
+const urlsForUser = function(id) {
+  let urlsFromUser = {};
 
+  for (let url in urlDatabase) {
+    console.log('id mandado por parametro' ,id);
+    console.log('id de la base de datos', urlDatabase[url].userID);
+    if (urlDatabase[url].userID === id) {
+      urlsFromUser = {
+        id : {longURL:urlDatabase[url].longURL, userID: id},
+      };
+    }
+    console.log('funcion', urlsFromUser);
+    
+  }
+  return urlsFromUser;
+};
+
+const userExist = function(userMail) {
+  for (let user in users) {
+    if (users[user].email === userMail) {
+      return users[user];
+    }
+  }
+  return false;
+};
+let isLogin = false;
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {longURL:"http://www.lighthouselabs.ca", userID: "aJ48lW"},
+  "9sm5xK": {longURL:"http://www.google.com", userID: "aR2faH"}
+};
+
+const users = {
+  "aJ48lW": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "aR2faH": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
 };
 
 const bodyParser = require("body-parser");
@@ -28,33 +66,30 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  let templateVars = {
-    greeting: 'Hello World!',
-    userName: req.cookies['username']};
-  res.render("hello_world", templateVars);
-});
-
 app.get("/urls/new", (req, res) => {
-  let templateVars = {
-    userName: req.cookies['username'],
-  };
-  res.render("urls_new", templateVars);
+  if (isLogin) {
+    let templateVars = {
+      user: users[req.cookies['user_id']],
+    };
+    res.render("urls_new", templateVars);
+  } else {
+    let templateVars = {
+      user: users[req.cookies['user_id']],
+    };
+    res.render("login", templateVars);
+  }
 });
 
 app.get("/urls", (req, res) => {
   let templateVars = {
-    urls: urlDatabase,
-    userName: req.cookies['username'],
+    urls: urlsForUser(req.cookies['user_id']),
+    user: users[req.cookies['user_id']],
   };
+  console.log('hola',templateVars.urls);
   res.render("urls_index", templateVars);
 });
 
@@ -62,8 +97,9 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL,
-    longURL: req.params["longURL"],
-    userName: req.cookies['username']};
+    longURL: urlDatabase[req.params.shortURL].longURL,
+    user: users[req.cookies['user_id']],
+  };
   res.render("urls_show", templateVars);
 });
 
@@ -72,9 +108,27 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+app.get("/register", (req, res) => {
+  let templateVars = {
+    user: users[req.cookies['user_id']],
+  };
+  res.render("user_registration",templateVars);
+});
+
+app.get("/login", (req, res) => {
+  let templateVars = {
+    user: users[req.cookies['user_id']],
+  };
+  isLogin = true;
+  res.render("login",templateVars);
+});
+
 app.post("/urls", (req, res) => {
   let shortUrl = generateRandomString();
-  urlDatabase[shortUrl] = req.body.longURL;
+  urlDatabase[shortUrl] = {
+    longURL : req.body.longURL,
+    userID : req.cookies['user_id']
+  };
   res.redirect(`/urls/${shortUrl}`);
 });
 
@@ -86,16 +140,46 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 app.post("/urls/:shortURL/", (req, res) => {
   const url = req.params.shortURL;
-  urlDatabase[url] = req.body.longURL;
+  console.log(req.body);
+  urlDatabase[url] = {
+    longURL : req.body.longURL,
+  };
   res.redirect("/urls");
+});
+
+
+app.post("/logout", (req, res) => {
+  res.clearCookie('user_id');
+  res.redirect("/urls");
+});
+
+app.post("/register", (req, res) => {
+  let userID = generateRandomString();
+  if (req.body.password && !userExist(req.body.mail) && req.body.mail) {
+    users[userID] = {
+      id: userID,
+      email: req.body.mail,
+      password: req.body.password };
+    res.redirect("/urls");
+  } else {
+    res.redirect('register');
+  }
 });
 
 app.post("/login", (req, res) => {
-  res.cookie('username', req.body.user);
-  res.redirect("/urls");
+  const user = userExist(req.body.mail);
+  if (!user) {
+    //es.status(400).send("omg its broken!");
+    res.redirect('login');
+  }
+  if (req.body.password && req.body.password === user.password) {
+    res.cookie('user_id', user.id);
+    res.redirect("/urls");
+    return;
+  } else {
+    //res.status(400).send("omg its broken!");
+    res.redirect('login');
+  }
 });
 
-app.post("/logout", (req, res) => {
-  res.clearCookie('username');
-  res.redirect("/urls");
-});
+
