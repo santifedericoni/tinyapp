@@ -4,6 +4,15 @@ const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
 const {getUserByEmail, generateRandomString, urlsForUser} = require('./helpers.js');
+const bodyParser = require("body-parser");
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['Oe7xdNTr8ZxUY2Oiw3hTCxWebQc='],
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
+
+app.use(bodyParser.urlencoded({extended: true}));
 
 let isLogin = false;
 
@@ -24,20 +33,8 @@ const users = {
     password: "dishwasher-funk"
   }
 };
-app.use(cookieSession({
-  name: 'session',
-  keys: ['Oe7xdNTr8ZxUY2Oiw3hTCxWebQc='],
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}));
-
-const bodyParser = require("body-parser");
-app.use(bodyParser.urlencoded({extended: true}));
 
 app.set("view engine", "ejs");
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -173,4 +170,6 @@ app.post("/login", (req, res) => {
   }
 });
 
-
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
+});
