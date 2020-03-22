@@ -68,7 +68,7 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   if (!isLogin) {
-    res.status(403).send('Need to be logged');
+    res.status(403).send('You are not authorized');
   } else if (urlDatabase[req.params.shortURL].userID === users[req.session.userID].id) {
     let templateVars = {
       shortURL: req.params.shortURL,
@@ -87,8 +87,8 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL);
+  const shortURL = req.params.shortURL;
+  res.redirect(urlDatabase[shortURL].longURL);
 });
 
 app.get("/register", (req, res) => {
@@ -116,7 +116,9 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (urlDatabase[req.params.shortURL].userID === users[req.session.userID].id) {
+  if (!isLogin) {
+    res.status(403).send('You are not authorized');
+  } else if (urlDatabase[req.params.shortURL].userID === users[req.session.userID].id) {
     const url = req.params.shortURL;
     delete urlDatabase[url];
     res.redirect("/urls");
@@ -147,7 +149,8 @@ app.post("/register", (req, res) => {
       id: userID,
       email: req.body.mail,
       password: bcrypt.hashSync(req.body.password, 10) };
-    res.redirect("/urls");
+    res.redirect("/login");
+
   } else {
     res.status(400).send("User already exist");
     res.redirect('register');

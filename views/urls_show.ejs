@@ -12,7 +12,11 @@
       <div class="card-header"></div>
       <div class="card-body">
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">Short URL: <a href="<%=longURL%>"><%= shortURL %></a></p>
+        <% if (longURL[0]=== 'h' && longURL[1] === 't' && longURL [2] === 't' && longURL[3] === 'p' ) { %>
+          <p class="card-text">Short URL: <a href="<%=longURL%>"><%= shortURL %></a></p>
+        <% } else { %>
+          <p class="card-text">Short URL: <a href="https://<%=longURL%>"><%= shortURL %></a></p>
+        <% } %>
       </div>
     <div class="card-footer text-muted"></div>
   </div>
