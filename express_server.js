@@ -59,11 +59,18 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = {
-    urls: urlsForUser(req.session.userID, urlDatabase),
-    user: users[req.session.userID],
-  };
-  res.render("urls_index", templateVars);
+  if (isLogin) {
+    let templateVars = {
+      urls: urlsForUser(req.session.userID, urlDatabase),
+      user: users[req.session.userID],
+    };
+    res.render("urls_index", templateVars);
+  } else {
+    let templateVars = {
+      user: users[req.session.userID],
+    };
+    res.render("login", templateVars);
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -163,7 +170,10 @@ app.post("/login", (req, res) => {
     res.status(400).send("User don't exist");
     res.redirect('login');
   }
-  if (req.body.password &&  bcrypt.compareSync(req.body.password, user.password)) {
+  if (!req.body.password) {
+    res.status(400).send("Please enter a password");
+    res.redirect('login');
+  } else if (bcrypt.compareSync(req.body.password, user.password)) {
     req.session.userID = user.id;
     res.redirect("/urls");
     return;
